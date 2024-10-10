@@ -1,18 +1,23 @@
 package com.proyecto.san_felipe.entities;
 
 
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.util.Date;
 
 @Document
 public class WashRecord {
 
     @Id
-
     private String id;
-    private Employee employee;
-    private Car car;
-    private ServiceOffered providedService;
+    @CreatedDate
+    private Date date;
+    private String employee;
+    private String car;
+    private String serviceOffered;
+
 
     public WashRecord(){
 
@@ -26,27 +31,27 @@ public class WashRecord {
         this.id = id;
     }
 
-    public Employee getEmployee() {
+    public String getEmployee() {
         return employee;
     }
 
-    public void setEmployee(Employee employee) {
+    public void setEmployee(String employee) {
         this.employee = employee;
     }
 
-    public Car getCar() {
+    public String getCar() {
         return car;
     }
 
-    public void setCar(Car car) {
+    public void setCar(String car) {
         this.car = car;
     }
 
-    public ServiceOffered getProvidedService() {
-        return providedService;
+    public String getServiceOffered() {
+        return serviceOffered;
     }
 
-    public void setProvidedService(ServiceOffered providedService) {
-        this.providedService = providedService;
+    public void setServiceOffered(String serviceOffered) {
+        this.serviceOffered = serviceOffered;
     }
 }
