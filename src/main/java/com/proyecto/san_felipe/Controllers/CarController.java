@@ -31,4 +31,6 @@ public class CarController {
         carService.deleteCarByLicencePlate(licencePlate);
         return ResponseEntity.ok("car deleted successfully with licence plate: " + licencePlate);
     }
+
+
 }

@@ -7,7 +7,9 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import java.util.Date;
 import java.util.List;
 
-public interface WashRecordRepository extends MongoRepository<WashRecord, Date> {
-    List<WashRecord> findByDate(Date date);
+public interface WashRecordRepository extends MongoRepository<WashRecord, String> {
+    List<WashRecord> findByCarAndDateBetween(String car, Date startDate, Date endDate);
+    List<WashRecord> findByCar(String car);
+
 
 }

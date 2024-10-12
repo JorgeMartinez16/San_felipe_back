@@ -18,11 +18,15 @@ public class WashRecordService {
         return washRecordRepository.save(washRecord);
     }
 
-    public List<WashRecord> getAllWashRecord(){
+    public List<WashRecord> getAllWashRecord() {
         return washRecordRepository.findAll();
     }
-    public List<WashRecord> getWashedByDate(Date date){
-        return washRecordRepository.findByDate(date);
+
+    public List<WashRecord> getWashRecordByCarAndTheRange(String car, Date starDate, Date endDate) {
+        return washRecordRepository.findByCarAndDateBetween(car, starDate, endDate);
     }
 
+    public List<WashRecord> getWashRecordByLicencePlate(String car) {
+        return washRecordRepository.findByCar(car);
+    }
 }

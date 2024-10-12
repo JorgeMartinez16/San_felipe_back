@@ -15,7 +15,6 @@ public class Car {
     @Id
     private  String id;
     @Field
-
     private String licencePlate;
     @Field
     private String make;
