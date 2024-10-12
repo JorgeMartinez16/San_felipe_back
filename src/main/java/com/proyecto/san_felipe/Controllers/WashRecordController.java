@@ -43,17 +43,41 @@ public class WashRecordController {
         return ResponseEntity.ok(records);
     }
 
+    @GetMapping("/by_employees")
+    public ResponseEntity<List<WashRecord>> getWashRecordByEmployeeAndDate(
+            @RequestParam String employee,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date endDate
+    ) {
+        List<WashRecord> records = washRecordService.getWashRecordByEmployeeAndDate(
+                employee, startDate, endDate
+        );
+        return ResponseEntity.ok(records);
+    }
+
     @GetMapping("/licence-plate")
     public ResponseEntity<List<WashRecord>> getWashRecordByLicencePLate(@RequestParam String car){
         List<WashRecord> records = washRecordService.getWashRecordByLicencePlate(car);
         return  ResponseEntity.ok(records);
     };
 
+    @GetMapping("/employee/{employee}/payment")
+    public ResponseEntity<Double> calculatePayment(
+            @PathVariable String employee,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Date endDate) {
 
-    @GetMapping("/test")
-    public ResponseEntity<String> test() {
-        return ResponseEntity.ok("El controlador está funcionando");
+        try {
+            double payment = washRecordService.calculateEmployeePayment(employee, startDate, endDate);
+            return ResponseEntity.ok(payment);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
     }
 
+
 }
+
+
+
 
