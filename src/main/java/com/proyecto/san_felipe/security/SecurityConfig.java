@@ -1,10 +1,8 @@
 package com.proyecto.san_felipe.security;
 
-
 import com.proyecto.san_felipe.Repository.UserRepository;
 import com.proyecto.san_felipe.entities.User;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -14,9 +12,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -37,14 +37,15 @@ public class SecurityConfig {
     @Autowired
     private AuthService authService;
 
-    // Cambia la clave secreta a un formato de llave segura (recomendado en JJWT)
-    private final Key secretKey = Keys.hmacShaKeyFor("secretsecretsecretsecretsecretsecret".getBytes());
+    private static final String SECRET_KEY = "secretsecretsecretsecretsecretsecret"; // Asegúrate de que esto sea un String
+
+    private static final Key secretKey = Keys.hmacShaKeyFor(SECRET_KEY.getBytes()); // Asegúrate de que sea un String
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(csrf -> csrf.disable()) // Deshabilitar CSRF
+        http.csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**").permitAll()  // Permitir registro y login
+                        .requestMatchers("/auth/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
@@ -72,16 +73,37 @@ public class SecurityConfig {
         @Override
         protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
                 throws ServletException, IOException {
-            // Aquí puedes agregar la lógica para procesar el token JWT
             String authorizationHeader = request.getHeader("Authorization");
 
-            // Lógica para validar el token JWT
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
-                // Validar el token aquí y establecer la autenticación si es válida
+                System.out.println("Token recibido doFilterInternal: " + token);
+
+                try {
+                    String username = Jwts.parser()
+                            .setSigningKey(secretKey)
+                            .parseClaimsJws(token)
+                            .getBody()
+                            .getSubject();
+
+                    System.out.println("Usuario en el token: " + username);
+
+                    if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                        User user = authService.getUserByUsername(username); // Método a implementar
+                        if (user != null) {
+                            UsernamePasswordAuthenticationToken authentication =
+                                    new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+                            SecurityContextHolder.getContext().setAuthentication(authentication);
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace(); // Imprimir el stack trace para depuración
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    return;
+                }
             }
 
-            chain.doFilter(request, response); // Continuar con el filtro
+            chain.doFilter(request, response);
         }
     }
 
@@ -92,9 +114,6 @@ public class SecurityConfig {
         private UserRepository userRepository;
 
         private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-
-        // Genera una clave segura para HS256
-        private final Key secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
 
         public String register(String username, String password) {
             User user = new User();
@@ -117,6 +136,10 @@ public class SecurityConfig {
             } else {
                 throw new Exception("User not found");
             }
+        }
+
+        public User getUserByUsername(String username) {
+            return userRepository.findByUsername(username).orElse(null); // Implementación del método
         }
 
         private String generateToken(User user) {

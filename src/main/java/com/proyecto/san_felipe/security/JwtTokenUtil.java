@@ -1,27 +1,36 @@
 package com.proyecto.san_felipe.security;
 
-import io.jsonwebtoken.Claims;
+import com.proyecto.san_felipe.entities.User;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 @Component
 public class JwtTokenUtil {
 
-    private final String SECRET_KEY = "secretsecretsecretsecretsecretsecret"; // Cambia por una clave más segura
-    private final long EXPIRATION_TIME = 86400000; // 1 día en milisegundos
+    private final String SECRET_KEY = "secretsecretsecretsecretsecretsecret"; // Asegúrate de que esto sea un String
 
-    public String generateToken(Authentication authentication) {
-        String username = authentication.getName();
-        return Jwts.builder()
-                .setSubject(username)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
+    private final long EXPIRATION_TIME = 86400000; // 24 horas en milisegundos
+
+    public String generateToken(User user) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("role", user.getRole());
+
+        String token = Jwts.builder()
+                .setClaims(claims)
+                .setSubject(user.getUsername())
+                .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
-                .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
+                .signWith(SignatureAlgorithm.HS256, SECRET_KEY) // Usa la clave secreta definida
                 .compact();
+
+        System.out.println("Token generado: " + token); // Imprimir el token generado
+        return token;
     }
 
     public String extractUsername(String token) {
