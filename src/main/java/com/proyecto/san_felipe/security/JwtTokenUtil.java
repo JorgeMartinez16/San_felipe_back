@@ -13,7 +13,7 @@ import java.util.Map;
 @Component
 public class JwtTokenUtil {
 
-    private final String SECRET_KEY = "secretsecretsecretsecretsecretsecret"; // Asegúrate de que esto sea un String
+    private final String SECRET_KEY = "secretsecretsecretsecretsecretsecret";
 
     private final long EXPIRATION_TIME = 86400000; // 24 horas en milisegundos
 
@@ -26,10 +26,10 @@ public class JwtTokenUtil {
                 .setSubject(user.getUsername())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
-                .signWith(SignatureAlgorithm.HS256, SECRET_KEY) // Usa la clave secreta definida
+                .signWith(SignatureAlgorithm.HS256, SECRET_KEY) // clave secreta definida
                 .compact();
 
-        System.out.println("Token generado: " + token); // Imprimir el token generado
+        System.out.println("Token generado: " + token);
         return token;
     }
 

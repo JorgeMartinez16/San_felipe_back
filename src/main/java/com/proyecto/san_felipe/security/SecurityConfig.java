@@ -37,9 +37,9 @@ public class SecurityConfig {
     @Autowired
     private AuthService authService;
 
-    private static final String SECRET_KEY = "secretsecretsecretsecretsecretsecret"; // Asegúrate de que esto sea un String
+    private static final String SECRET_KEY = "secretsecretsecretsecretsecretsecret";
 
-    private static final Key secretKey = Keys.hmacShaKeyFor(SECRET_KEY.getBytes()); // Asegúrate de que sea un String
+    private static final Key secretKey = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -139,7 +139,7 @@ public class SecurityConfig {
         }
 
         public User getUserByUsername(String username) {
-            return userRepository.findByUsername(username).orElse(null); // Implementación del método
+            return userRepository.findByUsername(username).orElse(null);
         }
 
         private String generateToken(User user) {
@@ -150,8 +150,8 @@ public class SecurityConfig {
                     .setClaims(claims)
                     .setSubject(user.getUsername())
                     .setIssuedAt(new Date())
-                    .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)) // Token válido por 10 horas
-                    .signWith(secretKey) // Usa la clave generada
+                    .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))
+                    .signWith(secretKey)
                     .compact();
         }
     }
