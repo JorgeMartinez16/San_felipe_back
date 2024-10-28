@@ -22,6 +22,9 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.stereotype.Service;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.io.IOException;
 import java.security.Key;
@@ -37,13 +40,12 @@ public class SecurityConfig {
     @Autowired
     private AuthService authService;
 
-    private static final String SECRET_KEY = "secretsecretsecretsecretsecretsecret";
-
-    private static final Key secretKey = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
+    private static final Key SECRET_KEY = Keys.hmacShaKeyFor("secretsecretsecretsecretsecretsecret".getBytes());
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(csrf -> csrf.disable())
+        http.csrf().disable()
+                .cors().and() // Habilitar CORS
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
                         .anyRequest().authenticated()
@@ -62,6 +64,19 @@ public class SecurityConfig {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
+    // Corss
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.addAllowedOrigin("http://localhost:3000");
+        configuration.addAllowedMethod("*");
+        configuration.addAllowedHeader("*");
+        configuration.setAllowCredentials(true);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
     public class JwtTokenFilter extends OncePerRequestFilter {
 
         private final AuthService authService;
@@ -77,19 +92,16 @@ public class SecurityConfig {
 
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String token = authorizationHeader.substring(7);
-                System.out.println("Token recibido doFilterInternal: " + token);
-
                 try {
-                    String username = Jwts.parser()
-                            .setSigningKey(secretKey)
+                    String username = Jwts.parserBuilder()
+                            .setSigningKey(SECRET_KEY)
+                            .build()
                             .parseClaimsJws(token)
                             .getBody()
                             .getSubject();
 
-                    System.out.println("Usuario en el token: " + username);
-
                     if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                        User user = authService.getUserByUsername(username); // Método a implementar
+                        User user = authService.getUserByUsername(username);
                         if (user != null) {
                             UsernamePasswordAuthenticationToken authentication =
                                     new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
@@ -97,8 +109,7 @@ public class SecurityConfig {
                         }
                     }
                 } catch (Exception e) {
-                    e.printStackTrace(); // Imprimir el stack trace para depuración
-                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    response.sendError(HttpServletResponse.SC_FORBIDDEN, "Token inválido o expirado");
                     return;
                 }
             }
@@ -151,7 +162,7 @@ public class SecurityConfig {
                     .setSubject(user.getUsername())
                     .setIssuedAt(new Date())
                     .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))
-                    .signWith(secretKey)
+                    .signWith(SECRET_KEY)
                     .compact();
         }
     }

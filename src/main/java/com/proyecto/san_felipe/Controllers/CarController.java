@@ -20,11 +20,14 @@ public class CarController {
     public List<Car> findALl() {
         return carService.getAllCars();
     }
+
+
     @PostMapping("/register")
     public ResponseEntity<Car> registerCar(@RequestBody Car car) {
         Car savedCar = carService.registerCar(car);
         return new ResponseEntity<>(savedCar, HttpStatus.CREATED);
     }
+
 
     @DeleteMapping("/{licencePlate}")
     public ResponseEntity<String> deleteCar(@PathVariable("licencePlate")String licencePlate) {
@@ -33,4 +36,16 @@ public class CarController {
     }
 
 
+    @GetMapping("/{licencePlate}")
+    public ResponseEntity<Car> findCarByLicencePlate(@PathVariable("licencePlate") String licencePlate) {
+        Car car = carService.getCarByLicencePlate(licencePlate);
+        if (car != null) {
+            return ResponseEntity.ok(car);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(null); // O podrías devolver un mensaje de error más descriptivo
+        }
+
+
+    }
 }

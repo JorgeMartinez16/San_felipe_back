@@ -29,4 +29,10 @@ public class CarService {
         }
     }
 
+
+    public Car getCarByLicencePlate(String licencePlate) {
+        return carRepository.findByLicencePlate(licencePlate);
+    }
+
+
 }
