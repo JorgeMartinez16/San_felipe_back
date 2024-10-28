@@ -43,7 +43,7 @@ public class CarController {
             return ResponseEntity.ok(car);
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(null); // O podrías devolver un mensaje de error más descriptivo
+                    .body(null);
         }
 
 
