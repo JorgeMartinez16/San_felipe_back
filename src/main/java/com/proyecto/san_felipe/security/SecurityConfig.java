@@ -21,6 +21,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -45,7 +47,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf().disable()
-                .cors().and() // Habilitar CORS
+                .cors().and()
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
                         .anyRequest().authenticated()
@@ -64,7 +66,6 @@ public class SecurityConfig {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
-    // Corss
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
@@ -75,6 +76,15 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
+    }
+
+    @PostMapping("/forgot-password")
+    public String forgotPassword(@RequestParam String username) {
+        try {
+            return authService.sendPasswordResetToken(username);
+        } catch (Exception e) {
+            return "Error al enviar el token de recuperación de contraseña";
+        }
     }
 
     public class JwtTokenFilter extends OncePerRequestFilter {
@@ -125,6 +135,7 @@ public class SecurityConfig {
         private UserRepository userRepository;
 
         private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+        private final Map<String, String> resetTokens = new HashMap<>();
 
         public String register(String username, String password) {
             User user = new User();
@@ -134,6 +145,26 @@ public class SecurityConfig {
             userRepository.save(user);
             return "User registered successfully";
         }
+
+        public String resetPassword(String token, String newPassword) throws Exception {
+            String username = Jwts.parserBuilder()
+                    .setSigningKey(SECRET_KEY)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody()
+                    .getSubject();
+
+            Optional<User> userOpt = userRepository.findByUsername(username);
+            if (userOpt.isPresent()) {
+                User user = userOpt.get();
+                user.setPassword(passwordEncoder.encode(newPassword));
+                userRepository.save(user);
+                return "Contraseña actualizada correctamente";
+            } else {
+                throw new Exception("Token inválido o usuario no encontrado");
+            }
+        }
+
 
         public String login(String username, String password) throws Exception {
             Optional<User> userOpt = userRepository.findByUsername(username);
@@ -153,6 +184,18 @@ public class SecurityConfig {
             return userRepository.findByUsername(username).orElse(null);
         }
 
+        public String sendPasswordResetToken(String username) {
+            Optional<User> userOpt = userRepository.findByUsername(username);
+            if (userOpt.isPresent()) {
+                String token = generateResetToken();
+                resetTokens.put(username, token);
+                return "Password reset token: " + token;
+            } else {
+                return "User not found";
+            }
+        }
+
+
         private String generateToken(User user) {
             Map<String, Object> claims = new HashMap<>();
             claims.put("role", user.getRole());
@@ -164,6 +207,10 @@ public class SecurityConfig {
                     .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))
                     .signWith(SECRET_KEY)
                     .compact();
+        }
+
+        private String generateResetToken() {
+            return Long.toHexString(Double.doubleToLongBits(Math.random()));
         }
     }
 }
