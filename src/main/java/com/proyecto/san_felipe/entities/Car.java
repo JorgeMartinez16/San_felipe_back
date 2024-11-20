@@ -11,7 +11,6 @@ import org.springframework.data.mongodb.core.mapping.Field;
 import java.util.List;
 
 @Document
-
 public class Car {
     @Id
     private  String id;
