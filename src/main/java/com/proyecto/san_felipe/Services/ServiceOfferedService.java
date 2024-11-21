@@ -11,14 +11,13 @@ import java.util.List;
 public class ServiceOfferedService {
 
     @Autowired
-    public ServiceOfferedRepository serviceOfferedRepository;
+    private ServiceOfferedRepository serviceOfferedRepository;
 
-
-    public ServiceOffered registerServiceOffered(ServiceOffered serviceOffered){
+    public ServiceOffered registerServiceOffered(ServiceOffered serviceOffered) {
         return serviceOfferedRepository.save(serviceOffered);
     }
 
-    public List<ServiceOffered> getALlServicesOffered(){
+    public List<ServiceOffered> getAllServicesOffered() {
         return serviceOfferedRepository.findAll();
     }
 }

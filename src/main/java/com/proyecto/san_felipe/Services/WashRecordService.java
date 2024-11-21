@@ -21,6 +21,14 @@ public class WashRecordService {
     private WashRecordRepository washRecordRepository;
 
     public WashRecord registerWashRecord(WashRecord washRecord) {
+        // Validar que el servicio ofrecido exista
+        Optional<ServiceOffered> service = serviceOfferedRepository.findById(washRecord.getServiceOffered());
+        if (service.isEmpty()) {
+            throw new IllegalArgumentException("El servicio ofrecido con ID " + washRecord.getServiceOffered() + " no existe.");
+        }
+        Date now = new Date();
+        washRecord.setDate(now);
+        System.out.println("Fecha asignada: " + now);
         return washRecordRepository.save(washRecord);
     }
 
@@ -28,31 +36,38 @@ public class WashRecordService {
         return washRecordRepository.findAll();
     }
 
-    public List<WashRecord> getWashRecordByCarAndTheRange(String car, Date starDate, Date endDate) {
-        return washRecordRepository.findByCarAndDateBetween(car, starDate, endDate);
+    public List<WashRecord> getWashRecordByCarAndTheRange(String car, Date startDate, Date endDate) {
+        return washRecordRepository.findByCarAndDateBetween(car, startDate, endDate);
     }
 
     public List<WashRecord> getWashRecordByLicencePlate(String car) {
         return washRecordRepository.findByCar(car);
     }
 
-    public List<WashRecord> getWashRecordByEmployeeAndDate(String employee, Date starDate, Date endDate) {
-        return  washRecordRepository.findByEmployeeAndDateBetween(employee, starDate, endDate);
+    public List<WashRecord> getWashRecordByEmployeeAndDate(String employee, Date startDate, Date endDate) {
+        return washRecordRepository.findByEmployeeAndDateBetween(employee, startDate, endDate);
     }
 
     public double calculateEmployeePayment(String employee, Date startDate, Date endDate) {
         List<WashRecord> records = washRecordRepository.findByEmployeeAndDateBetween(employee, startDate, endDate);
 
-        System.out.println("Registros encontrados: " + records.size());
-        double totalPayment = 0;
-        for (WashRecord record : records) {
-            double servicePrice = Double.parseDouble(record.getServiceOffered());
-            totalPayment += servicePrice;
+        if (records.isEmpty()) {
+            System.out.println("loque");
+            return 0.0; // No hay registros para el rango de fechas
         }
-        return totalPayment * 0.35;
+
+        double totalPayment = 0;
+
+        for (WashRecord record : records) {
+            Optional<ServiceOffered> service = serviceOfferedRepository.findById(record.getServiceOffered());
+            if (service.isPresent()) {
+                totalPayment += service.get().getPrice();
+            } else {
+                // Registra un error en el log en lugar de lanzar excepción
+                System.err.println("Servicio con ID " + record.getServiceOffered() + " no encontrado.");
+            }
+        }
+
+        return totalPayment * 0.35; // Aplica el 35% al total
     }
-
-
-
-
 }

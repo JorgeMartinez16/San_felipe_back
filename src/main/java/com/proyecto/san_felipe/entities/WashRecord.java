@@ -12,7 +12,6 @@ public class WashRecord {
 
     @Id
     private String id;
-    @CreatedDate
     private Date date;
     private String employee;
     private String car;
